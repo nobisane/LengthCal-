@@ -1,0 +1,26 @@
+name: Build APK
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-linux-android,armv7-linux-androideabi
+      - name: Test conversion logic
+        run: cargo test
+      - name: Install Android platform
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34"
+      - name: Install cargo-apk
+        run: cargo install cargo-apk --version 0.10.0 --locked
+      - name: Build APK
+        run: cargo apk build --lib
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lengthcal-apk
+          path: target/debug/apk/lengthcal.apk
+          if-no-files-found: error
