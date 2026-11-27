@@ -1,0 +1,206 @@
+// Sizes are taken from the design image (about 2.7 image pixels = 1px here).
+
+component UnitRow inherits Rectangle {
+    in property <string> name;
+    in property <string> symbol;
+    in-out property <string> value <=> input.text;
+    callback edited(string);
+
+    height: 76px;
+    background: white;
+    border-radius: 18px;
+    border-width: 1px;
+    border-color: #e6edf5;
+
+    Text {
+        x: 15px; y: 15px;
+        text: root.name;
+        color: #0f172a;
+        font-size: 18px;
+        font-weight: 500;
+    }
+    Text {
+        x: 15px; y: 41px;
+        text: root.symbol;
+        color: #64748b;
+        font-size: 16px;
+    }
+
+    field := Rectangle {
+        x: parent.width * 33.3%;
+        y: 8px;
+        width: parent.width - self.x - 74px;
+        height: 60px;
+        background: white;
+        border-radius: 15px;
+        border-width: input.has-focus ? 2px : 1px;
+        border-color: input.has-focus ? #2563eb : #dfe6ee;
+
+        TouchArea {
+            clicked => { input.focus(); }
+        }
+
+        // Clips long numbers and scrolls them to follow the cursor.
+        viewport := Rectangle {
+            x: 16px;
+            width: parent.width - 28px;
+            height: parent.height;
+            clip: true;
+
+            input := TextInput {
+                property <length> scroll;
+                x: self.scroll;
+                width: max(viewport.width, self.preferred-width + 2px);
+                height: parent.height;
+                vertical-alignment: center;
+                single-line: true;
+                input-type: decimal;
+                color: #0f172a;
+                font-size: 20px;
+                text-cursor-width: 2px;
+                edited => { root.edited(self.text); }
+                cursor-position-changed(pos) => {
+                    if (pos.x + self.scroll < 0px) {
+                        self.scroll = -pos.x;
+                    } else if (pos.x + self.scroll > viewport.width - 2px) {
+                        self.scroll = viewport.width - 2px - pos.x;
+                    }
+                }
+                changed text => {
+                    if (!self.has-focus) { self.scroll = 0px; }
+                }
+            }
+        }
+    }
+
+    // Copy button
+    Rectangle {
+        x: parent.width - 60px;
+        y: 17px;
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        background: copy-touch.pressed ? #bfd4fb : #dbe8fd;
+
+        Rectangle {
+            x: 13px; y: 12px; width: 13px; height: 16px;
+            border-width: 2px; border-color: #0f172a; border-radius: 2px;
+        }
+        Rectangle {
+            x: 17px; y: 16px; width: 13px; height: 16px;
+            background: parent.background;
+            border-width: 2px; border-color: #0f172a; border-radius: 2px;
+        }
+
+        copy-touch := TouchArea {
+            clicked => {
+                if (input.text != "") {
+                    input.select-all();
+                    input.copy();
+                    input.clear-selection();
+                }
+            }
+        }
+    }
+}
+
+export component AppWindow inherits Window {
+    in-out property <string> km;
+    in-out property <string> m;
+    in-out property <string> yd;
+    in-out property <string> ft;
+    in-out property <string> inch;
+    in-out property <string> cm;
+    in-out property <string> mm;
+    in-out property <string> mi;
+    // (box index, typed text)
+    callback value-edited(int, string);
+
+    title: "Lengthcal";
+    background: #f1f6fd;
+
+    VerticalLayout {
+        padding-top: root.safe-area-insets.top;
+        padding-bottom: root.safe-area-insets.bottom;
+        padding-left: root.safe-area-insets.left;
+        padding-right: root.safe-area-insets.right;
+
+        // Header
+        Rectangle {
+            height: 80px;
+
+            Image {
+                x: 17px; y: 16px; width: 46px; height: 46px;
+                source: @image-url("icon.png");
+            }
+            Text {
+                x: 77px; y: 39px - self.height / 2;
+                text: "Lengthcal";
+                color: #0f172a;
+                font-size: 21px;
+                font-weight: 600;
+            }
+            Rectangle {
+                x: parent.width - 78px; y: 17px; width: 68px; height: 44px;
+                Text {
+                    text: "Clear";
+                    color: clear-touch.pressed ? #1e40af : #2563eb;
+                    font-size: 15px;
+                    font-weight: 500;
+                }
+                clear-touch := TouchArea {
+                    clicked => { root.km = ""; root.m = ""; root.yd = ""; root.ft = ""; root.inch = ""; root.cm = ""; root.mm = ""; root.mi = ""; }
+                }
+            }
+        }
+
+        // Rows scroll, and the focused one stays above the phone keyboard.
+        Flickable {
+            vertical-stretch: 1;
+            viewport-width: self.width;
+            viewport-height: list.preferred-height;
+
+            list := VerticalLayout {
+                width: parent.width;
+                alignment: start;
+                padding-left: 9px;
+                padding-right: 9px;
+                padding-bottom: 12px;
+                spacing: 10px;
+
+                UnitRow {
+                    name: "Kilometer"; symbol: "km"; value <=> root.km;
+                    edited(t) => { root.value-edited(0, t); }
+                }
+                UnitRow {
+                    name: "Meter"; symbol: "m"; value <=> root.m;
+                    edited(t) => { root.value-edited(1, t); }
+                }
+                UnitRow {
+                    name: "Yard"; symbol: "yd"; value <=> root.yd;
+                    edited(t) => { root.value-edited(2, t); }
+                }
+                UnitRow {
+                    name: "Foot"; symbol: "ft"; value <=> root.ft;
+                    edited(t) => { root.value-edited(3, t); }
+                }
+                UnitRow {
+                    name: "Inch"; symbol: "in"; value <=> root.inch;
+                    edited(t) => { root.value-edited(4, t); }
+                }
+                UnitRow {
+                    name: "Centimeter"; symbol: "cm"; value <=> root.cm;
+                    edited(t) => { root.value-edited(5, t); }
+                }
+                UnitRow {
+                    name: "Millimeter"; symbol: "mm"; value <=> root.mm;
+                    edited(t) => { root.value-edited(6, t); }
+                }
+                UnitRow {
+                    name: "Mile"; symbol: "mi"; value <=> root.mi;
+                    edited(t) => { root.value-edited(7, t); }
+                }
+            }
+        }
+    }
+}

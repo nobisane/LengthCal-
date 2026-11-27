@@ -1,9 +1,9 @@
 # lengthcal
 
-A length converter written in Rust (egui). Tap any box, type on the number pad,
-and all other boxes update.
+A length converter written in Rust (Slint). Tap any box, type with the phone's
+keyboard, and all other boxes update.
 
-Units: km, m, dm, cm, mm, µm, nm, mile, yard, foot, inch, nautical mile.
+Units: km, m, yd, ft, in, cm, mm, mi.
 
 ## Build the APK on GitHub (nothing to install)
 1. Create a new GitHub repository.
@@ -20,7 +20,7 @@ Units: km, m, dm, cm, mm, µm, nm, mile, yard, foot, inch, nautical mile.
 Needs Rust, a JDK, the Android SDK (platform 34, build-tools) and the NDK.
 Set `ANDROID_HOME` and `ANDROID_NDK_ROOT`, then:
 
-    rustup target add aarch64-linux-android armv7-linux-androideabi
+    rustup target add aarch64-linux-android
     cargo install cargo-apk --version 0.10.0 --locked
     cargo apk build --lib
 
@@ -30,4 +30,7 @@ Output: `target/debug/apk/lengthcal.apk`
 - The APK is signed with a debug key: fine for your own phone, not for the Play Store.
   Each fresh GitHub build may use a new key, so uninstall the old app before updating.
 - cargo-apk is no longer actively developed (its successor is xbuild).
-- Tests: `cargo test`. The conversion code is in `src/convert.rs`.
+- Tests: `cargo test`. The conversion code is in `src/convert.rs`; the screen is `ui/app.slint`.
+- Builds for 64-bit ARM phones only.
+- Slint has its own licence terms (including attribution under its royalty-free
+  licence); check them before publishing the app.
